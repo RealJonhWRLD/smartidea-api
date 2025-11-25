@@ -44,6 +44,7 @@ public class Property {
 
     // --- CONTRATO ---
     private String rentDueDate;       // Dia Vencimento
+    private String contractStartDate;    // Início Contrato (DD/MM/AAAA)
     private String contractDueDate;   // Vencimento Contrato
     private String contractMonths;    // Nº Meses Contrato (NOVO)
     private String rentPaymentStatus; // Status Pagamento (Em dia/Atrasado)
