@@ -18,9 +18,13 @@ target/
 *.iws
 *.iml
 *.ipr
+*.log
+target
+/resources
+/target
 
 ### NetBeans ###
-/nbproject/private/
+/nbproject/private
 /nbbuild/
 /dist/
 /nbdist/
