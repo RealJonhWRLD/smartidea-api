@@ -127,10 +127,7 @@ public class PropertyController {
         return repository.findById(id)
                 .map(existing -> {
 
-                    // 1) Regra: não pode trocar de inquilino se já tem contrato ativo
-                    validarTrocaInquilinoContratoAtivo(existing, updatedData);
-
-                    // 2) Atualiza os campos do imóvel
+                    // Atualiza os campos do imóvel
                     existing.setName(updatedData.getName());
                     existing.setPropertyType(updatedData.getPropertyType());
                     existing.setDescription(updatedData.getDescription());
