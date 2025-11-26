@@ -130,14 +130,32 @@ public class PropertyController {
                     // 1) Regra: não pode trocar de inquilino se já tem contrato ativo
                     validarTrocaInquilinoContratoAtivo(existing, updatedData);
 
-                    // 2) Atualiza os campos
+                    // 2) Atualiza os campos do imóvel
                     existing.setName(updatedData.getName());
                     existing.setPropertyType(updatedData.getPropertyType());
                     existing.setDescription(updatedData.getDescription());
 
+                    // ---- DADOS BÁSICOS DO CLIENTE (já existentes)
                     existing.setClientName(updatedData.getClientName());
                     existing.setClientPhone(updatedData.getClientPhone());
 
+                    // ---- CAMPOS DETALHADOS DO CLIENTE (PF / PJ) 👇
+                    existing.setTenantType(updatedData.getTenantType());
+                    existing.setTenantCpf(updatedData.getTenantCpf());
+                    existing.setTenantRg(updatedData.getTenantRg());
+                    existing.setTenantEmail(updatedData.getTenantEmail());
+                    existing.setTenantPhone2(updatedData.getTenantPhone2());
+                    existing.setTenantSocial(updatedData.getTenantSocial());
+                    existing.setTenantBirthDate(updatedData.getTenantBirthDate());
+                    existing.setTenantMaritalStatus(updatedData.getTenantMaritalStatus());
+                    existing.setTenantProfession(updatedData.getTenantProfession());
+
+                    existing.setCompanyName(updatedData.getCompanyName());
+                    existing.setCompanyCnpj(updatedData.getCompanyCnpj());
+                    existing.setLegalRepName(updatedData.getLegalRepName());
+                    existing.setLegalRepCpf(updatedData.getLegalRepCpf());
+
+                    // ---- DEMAIS CAMPOS DO IMÓVEL
                     existing.setMatricula(updatedData.getMatricula());
                     existing.setCagece(updatedData.getCagece());
                     existing.setEnel(updatedData.getEnel());

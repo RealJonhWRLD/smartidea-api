@@ -49,6 +49,23 @@ public class Property {
     private String contractMonths;    // Nº Meses Contrato (NOVO)
     private String rentPaymentStatus; // Status Pagamento (Em dia/Atrasado)
 
+    // exemplos típicos de campos no backend
+    private String tenantType;          // PF ou PJ
+    private String tenantCpf;
+    private String tenantRg;
+    private String tenantEmail;
+    private String tenantPhone2;
+    private String tenantSocial;
+    private String tenantBirthDate;
+    private String tenantMaritalStatus;
+    private String tenantProfession;
+
+    // empresa
+    private String companyName;
+    private String companyCnpj;
+    private String legalRepName;
+    private String legalRepCpf;
+
     // --- EXTRAS ---
     @Column(columnDefinition = "TEXT")
     private String notes;          // Observação (NOVO)
