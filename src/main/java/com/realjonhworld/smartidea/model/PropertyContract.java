@@ -1,7 +1,11 @@
 package com.realjonhworld.smartidea.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -17,33 +21,44 @@ public class PropertyContract {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Imóvel dono do contrato
+    // --- RELACIONAMENTOS ---
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
-    // Inquilino / Cliente no momento desse contrato
-    private String tenantName;
-    private String tenantPhone;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tenant_id", nullable = false)
+    private Tenant tenant;
 
-    // Datas
-    private LocalDate startDate;   // início do contrato
-    private LocalDate endDate;     // fim (planejado ou rescisão)
+    // --- DATAS ---
 
-    // Valores
-    private String rentValue;      // seguimos como String "R$ 1.500,00" pra bater com front
-    private String depositValue;   // caução
-    private String condoValue;     // condomínio
-
-    private String paymentDay;     // ex "05", "10"
-    private Integer monthsInContract; // meses planejados / efetivos
-    private Integer monthsLate;       // meses em atraso (se quiser controlar aqui)
-
-    // Status do contrato
-    @Enumerated(EnumType.STRING)
-    private ContractStatus status;    // ACTIVE, TERMINATED
-
-    private String terminationReason; // motivo rescisão opcional
-
+    private LocalDate startDate;
+    private LocalDate endDate;
     private LocalDate createdAt;
+
+    // --- VALORES ---
+
+    private String rentValue;      // ex: "R$ 750,00"
+    private String condoValue;
+    private String depositValue;
+
+    // Dia de vencimento do aluguel (ex: "05")
+    private String paymentDay;
+
+    private Integer monthsInContract;
+
+    // Status do IPTU (ex: "Pago", "Em aberto")
+    private String iptuStatus;
+
+    // Observações do contrato
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    // Status do contrato (ATIVO, TERMINATED, RESCINDED...)
+    @Enumerated(EnumType.STRING)
+    private ContractStatus status;
+
+    // Motivo de rescisão (opcional)
+    private String terminationReason;
 }

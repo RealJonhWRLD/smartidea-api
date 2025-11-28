@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.util.UUID;
 
 @Data
@@ -19,57 +20,32 @@ public class Property {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // --- DADOS BÁSICOS ---
-    private String name;           // Endereço Principal
-    private String propertyType;   // Casa, Comercial, etc.
+    // --- DADOS BÁSICOS DO IMÓVEL ---
+    private String name;           // Ex: "Nome do Endereço"
+    private String propertyType;   // Ex: "Salas" / "Galpão" / "Casa"
+
     @Column(columnDefinition = "TEXT")
-    private String description;    // Detalhes / Complemento
+    private String description;    // Texto completo: rua, bairro, cidade etc.
 
-    // --- CLIENTE ---
-    private String clientName;     // Inquilino
-    private String clientPhone;    // Telefone do Cliente (NOVO)
+    // --- CADASTROS / MATRÍCULAS ---
+    private String matricula;      // matrícula do imóvel (cartório)
+    private String cagece;         // conta água
+    private String enel;           // conta energia
 
-    // --- DADOS DO IMÓVEL ---
-    private String matricula;
-    private String cagece;         // Medidor Cagece (NOVO)
-    private String enel;           // Medidor Enel (NOVO)
-    private String lastRenovation; // Última Reforma (NOVO)
-    private String propertyStatus; // Alugado ou Disponível (NOVO)
+    private String lastRenovation; // último ano/mês de reforma (string por enquanto)
 
-    // --- FINANCEIRO ---
-    private String rentValue;      // Valor Aluguel
-    private String condoValue;     // Valor Condomínio (NOVO)
-    private String depositValue;   // Valor Calção (NOVO)
-    private String iptuStatus;     // Status IPTU
+    // --- STATUS GERAL DO IMÓVEL ---
+    // "Alugado" / "Disponível" etc. (status atual resumido)
+    private String propertyStatus;
 
-    // --- CONTRATO ---
-    private String rentDueDate;       // Dia Vencimento
-    private String contractStartDate;    // Início Contrato (DD/MM/AAAA)
-    private String contractDueDate;   // Vencimento Contrato
-    private String contractMonths;    // Nº Meses Contrato (NOVO)
-    private String rentPaymentStatus; // Status Pagamento (Em dia/Atrasado)
+    // Status do IPTU (Pago / Pendente / Isento)
+    private String iptuStatus;     // 👈 NOVO CAMPO
 
-    // exemplos típicos de campos no backend
-    private String tenantType;          // PF ou PJ
-    private String tenantCpf;
-    private String tenantRg;
-    private String tenantEmail;
-    private String tenantPhone2;
-    private String tenantSocial;
-    private String tenantBirthDate;
-    private String tenantMaritalStatus;
-    private String tenantProfession;
-
-    // empresa
-    private String companyName;
-    private String companyCnpj;
-    private String legalRepName;
-    private String legalRepCpf;
-
-    // --- EXTRAS ---
+    // Observações gerais do imóvel (não do contrato)
     @Column(columnDefinition = "TEXT")
-    private String notes;          // Observação (NOVO)
+    private String notes;
 
+    // --- LOCALIZAÇÃO ---
     @Column(nullable = false)
     private Double lat;
 
