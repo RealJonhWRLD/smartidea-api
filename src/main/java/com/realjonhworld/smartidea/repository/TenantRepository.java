@@ -9,9 +9,7 @@ import java.util.UUID;
 
 public interface TenantRepository extends JpaRepository<Tenant, UUID> {
 
-    // usado pelo PropertyContractController para buscar/criar inquilino
-    Optional<Tenant> findByName(String name);
-
-    // usado pelo TenantController para listar com filtro por nome
     List<Tenant> findByNameContainingIgnoreCase(String name);
+
+    Optional<Tenant> findByName(String name);
 }

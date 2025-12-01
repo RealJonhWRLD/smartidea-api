@@ -3,41 +3,45 @@ package com.realjonhworld.smartidea.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "tenants")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Tenant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Nome que aparece na tela (pessoa ou empresa)
-    @Column(nullable = false)
+    // Nome do cliente
     private String name;
 
-    // Tipo de inquilino: "PF" / "PJ" (pode ser null por enquanto)
+    // "PF" ou "PJ"
     private String tenantType;
 
-    // --- DADOS PESSOAIS (PF) ---
     private String tenantCpf;
     private String tenantRg;
     private String tenantEmail;
-    private String tenantPhone;   // telefone principal
-    private String tenantPhone2;  // telefone secundário
-    private String tenantSocial;  // @instagram, facebook etc.
-    private String tenantBirthDate;   // string (ex: "10/10/1990")
+    private String tenantPhone;
+    private String tenantPhone2;
+
+    private String tenantSocial;
+    private String tenantBirthDate;
     private String tenantMaritalStatus;
     private String tenantProfession;
 
-    // --- DADOS EMPRESA (PJ) ---
+    // Dados de empresa (se for PJ)
     private String companyName;
     private String companyCnpj;
     private String legalRepName;
     private String legalRepCpf;
+
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PropertyContract> contracts;
 }

@@ -1,7 +1,7 @@
 package com.realjonhworld.smartidea.controller;
 
-import com.realjonhworld.smartidea.dto.contract.ContractCreateRequest;
-import com.realjonhworld.smartidea.dto.contract.ContractHistoryItemDTO;
+import com.realjonhworld.smartidea.dto.contract.ContractDTO;
+import com.realjonhworld.smartidea.dto.contract.ContractRequestDTO;
 import com.realjonhworld.smartidea.model.ContractStatus;
 import com.realjonhworld.smartidea.model.Property;
 import com.realjonhworld.smartidea.model.PropertyContract;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,111 +27,85 @@ public class PropertyContractController {
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public PropertyContractController(
-            PropertyContractRepository contractRepository,
-            PropertyRepository propertyRepository,
-            TenantRepository tenantRepository
-    ) {
+    public PropertyContractController(PropertyContractRepository contractRepository,
+                                      PropertyRepository propertyRepository,
+                                      TenantRepository tenantRepository) {
         this.contractRepository = contractRepository;
         this.propertyRepository = propertyRepository;
         this.tenantRepository = tenantRepository;
     }
 
-    // 1) CRIAR NOVO CONTRATO
+    // CRIAR CONTRATO
     @PostMapping
-    public ContractHistoryItemDTO createContract(@RequestBody ContractCreateRequest req) {
-
-        // ---- valida e converte propertyId (String -> UUID) ----
-        if (req.propertyId() == null || req.propertyId().isBlank()) {
-            throw new RuntimeException("propertyId não informado no corpo da requisição");
-        }
-
-        UUID propertyUuid = UUID.fromString(req.propertyId());
-
-        Property property = propertyRepository.findById(propertyUuid)
+    public ContractDTO create(@RequestBody ContractRequestDTO r) {
+        Property property = propertyRepository.findById(UUID.fromString(r.propertyId()))
                 .orElseThrow(() -> new RuntimeException("Imóvel não encontrado"));
 
-        // ---- busca / cria inquilino por NOME ----
-        Tenant tenant = tenantRepository.findByName(req.tenantName())
-                .orElseGet(() -> tenantRepository.save(
-                        Tenant.builder()
-                                .name(req.tenantName())
-                                .build()
-                ));
+        Tenant tenant = tenantRepository.findById(UUID.fromString(r.tenantId()))
+                .orElseThrow(() -> new RuntimeException("Inquilino não encontrado"));
 
-        // ---- monta entidade do contrato ----
-        PropertyContract contract = PropertyContract.builder()
+        PropertyContract c = PropertyContract.builder()
                 .property(property)
                 .tenant(tenant)
-                .rentValue(req.rentValue())
-                .condoValue(req.condoValue())
-                .depositValue(req.depositValue())
-                .paymentDay(req.paymentDay())
-                .monthsInContract(req.monthsInContract())
-                .iptuStatus(req.iptuStatus())
-                .notes(req.notes())
+                .rentValue(r.rentValue())
+                .condoValue(r.condoValue())
+                .depositValue(r.depositValue())
+                .paymentDay(r.paymentDay())
+                .monthsInContract(r.monthsInContract())
+                .iptuStatus(r.iptuStatus())
+                .notes(r.notes())
+                .startDate(parseDate(r.startDate()))
+                .endDate(parseDate(r.endDate()))
                 .status(ContractStatus.ACTIVE)
-                .createdAt(LocalDate.now())
                 .build();
 
-        if (req.startDate() != null && !req.startDate().isBlank()) {
-            contract.setStartDate(LocalDate.parse(req.startDate(), DATE_FORMAT));
-        }
-
-        if (req.endDate() != null && !req.endDate().isBlank()) {
-            contract.setEndDate(LocalDate.parse(req.endDate(), DATE_FORMAT));
-        }
-
-        PropertyContract saved = contractRepository.save(contract);
-
-        return new ContractHistoryItemDTO(
-                saved.getId(),
-                saved.getTenant().getName(),
-                saved.getStartDate() != null ? saved.getStartDate().format(DATE_FORMAT) : null,
-                saved.getEndDate() != null ? saved.getEndDate().format(DATE_FORMAT) : null,
-                saved.getRentValue(),
-                saved.getStatus().name()
-        );
+        PropertyContract saved = contractRepository.save(c);
+        return toDTO(saved);
     }
 
-    // 2) ENCERRAR / RESCINDIR CONTRATO
-    @PutMapping("/{id}/terminate")
-    public ContractHistoryItemDTO terminateContract(
-            @PathVariable UUID id,
-            @RequestParam String endDate,
-            @RequestParam(required = false) String reason
-    ) {
-        PropertyContract contract = contractRepository.findById(id)
+    // ENCERRAR CONTRATO
+    @PostMapping("/{id}/terminate")
+    public ContractDTO terminate(@PathVariable UUID id,
+                                 @RequestParam(required = false) String reason,
+                                 @RequestParam(required = false) String endDate) {
+
+        PropertyContract c = contractRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Contrato não encontrado"));
 
-        contract.setEndDate(LocalDate.parse(endDate, DATE_FORMAT));
-        contract.setStatus(ContractStatus.TERMINATED);
-        contract.setTerminationReason(reason);
+        c.setStatus(ContractStatus.TERMINATED);
+        c.setTerminationReason(reason);
+        if (endDate != null && !endDate.isBlank()) {
+            c.setEndDate(parseDate(endDate));
+        } else {
+            c.setEndDate(LocalDate.now());
+        }
 
-        PropertyContract saved = contractRepository.save(contract);
-
-        return new ContractHistoryItemDTO(
-                saved.getId(),
-                saved.getTenant().getName(),
-                saved.getStartDate() != null ? saved.getStartDate().format(DATE_FORMAT) : null,
-                saved.getEndDate() != null ? saved.getEndDate().format(DATE_FORMAT) : null,
-                saved.getRentValue(),
-                saved.getStatus().name()
-        );
+        PropertyContract saved = contractRepository.save(c);
+        return toDTO(saved);
     }
 
-    // 3) LISTA GERAL DE CONTRATOS (opcional)
-    @GetMapping
-    public List<ContractHistoryItemDTO> listAllContracts() {
-        return contractRepository.findAll().stream()
-                .map(c -> new ContractHistoryItemDTO(
-                        c.getId(),
-                        c.getTenant().getName(),
-                        c.getStartDate() != null ? c.getStartDate().format(DATE_FORMAT) : null,
-                        c.getEndDate() != null ? c.getEndDate().format(DATE_FORMAT) : null,
-                        c.getRentValue(),
-                        c.getStatus().name()
-                ))
-                .toList();
+    private LocalDate parseDate(String value) {
+        if (value == null || value.isBlank()) return null;
+        return LocalDate.parse(value, DATE_FORMAT);
+    }
+
+    private ContractDTO toDTO(PropertyContract c) {
+        return new ContractDTO(
+                c.getId(),
+                c.getProperty() != null ? c.getProperty().getId() : null,
+                c.getTenant() != null ? c.getTenant().getId() : null,
+                c.getTenant() != null ? c.getTenant().getName() : null,
+                c.getRentValue(),
+                c.getCondoValue(),
+                c.getDepositValue(),
+                c.getPaymentDay(),
+                c.getMonthsInContract(),
+                c.getIptuStatus(),
+                c.getNotes(),
+                c.getStartDate() != null ? c.getStartDate().format(DATE_FORMAT) : null,
+                c.getEndDate() != null ? c.getEndDate().format(DATE_FORMAT) : null,
+                c.getStatus() != null ? c.getStatus().name() : null,
+                c.getTerminationReason()
+        );
     }
 }

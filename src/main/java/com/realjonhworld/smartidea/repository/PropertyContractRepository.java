@@ -10,10 +10,9 @@ import java.util.UUID;
 
 public interface PropertyContractRepository extends JpaRepository<PropertyContract, UUID> {
 
-    // histórico de contratos de um imóvel (ordenado do mais recente para o mais antigo)
     List<PropertyContract> findByPropertyIdOrderByStartDateDesc(UUID propertyId);
 
-    // contrato ATIVO mais recente de um imóvel (usado na sidebar)
+    // NOVO: pegar o contrato ATIVO mais recente do imóvel
     Optional<PropertyContract> findFirstByPropertyIdAndStatusOrderByStartDateDesc(
             UUID propertyId,
             ContractStatus status

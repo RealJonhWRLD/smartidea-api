@@ -1,54 +1,59 @@
 package com.realjonhworld.smartidea.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "properties")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Property {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // --- DADOS BÁSICOS DO IMÓVEL ---
-    private String name;           // Ex: "Nome do Endereço"
-    private String propertyType;   // Ex: "Salas" / "Galpão" / "Casa"
+    // Ex: "Galpão EMISA 1101"
+    private String name;
 
+    // Ex: "Casa", "Sala", "Galpão"
+    private String propertyType;
+
+    // Endereço completo / detalhes
     @Column(columnDefinition = "TEXT")
-    private String description;    // Texto completo: rua, bairro, cidade etc.
+    private String description;
 
-    // --- CADASTROS / MATRÍCULAS ---
-    private String matricula;      // matrícula do imóvel (cartório)
-    private String cagece;         // conta água
-    private String enel;           // conta energia
+    // Matrícula do imóvel
+    private String matricula;
 
-    private String lastRenovation; // último ano/mês de reforma (string por enquanto)
+    // Códigos de medidor
+    private String cagece;
+    private String enel;
 
-    // --- STATUS GERAL DO IMÓVEL ---
-    // "Alugado" / "Disponível" etc. (status atual resumido)
+    // Data da última reforma (texto livre por enquanto)
+    private String lastRenovation;
+
+    // Situação do imóvel (Disponível, Vendido, Alugado, etc.)
     private String propertyStatus;
 
-    // Status do IPTU (Pago / Pendente / Isento)
-    private String iptuStatus;     // 👈 NOVO CAMPO
+    // Status IPTU (Pago / Em aberto / Isento)
+    private String iptuStatus;
 
-    // Observações gerais do imóvel (não do contrato)
+    // Observações gerais
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // --- LOCALIZAÇÃO ---
-    @Column(nullable = false)
+    // Geo
     private Double lat;
-
-    @Column(nullable = false)
     private Double lng;
+
+    // Histórico de contratos
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PropertyContract> contracts;
 }

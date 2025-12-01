@@ -1,12 +1,8 @@
 package com.realjonhworld.smartidea.dto.contract;
 
-import java.util.UUID;
-
-public record ContractDTO(
-        UUID id,
-        UUID propertyId,
-        UUID tenantId,
-        String tenantName,
+public record ContractRequestDTO(
+        String propertyId,
+        String tenantId,          // ou tenantId se você escolher pelo ID
         String rentValue,
         String condoValue,
         String depositValue,
@@ -14,8 +10,6 @@ public record ContractDTO(
         Integer monthsInContract,
         String iptuStatus,
         String notes,
-        String startDate,
-        String endDate,
-        String status,
-        String terminationReason
+        String startDate,         // "dd/MM/yyyy"
+        String endDate            // "dd/MM/yyyy" ou null
 ) {}

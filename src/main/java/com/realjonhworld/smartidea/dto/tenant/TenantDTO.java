@@ -2,13 +2,10 @@ package com.realjonhworld.smartidea.dto.tenant;
 
 import java.util.UUID;
 
-/**
- * DTO para exibir dados de inquilino/cliente.
- */
 public record TenantDTO(
         UUID id,
         String name,
-        String tenantType,        // "PF" ou "PJ" (pode ser null)
+        String tenantType,
         String tenantCpf,
         String tenantRg,
         String tenantEmail,
@@ -22,5 +19,5 @@ public record TenantDTO(
         String companyCnpj,
         String legalRepName,
         String legalRepCpf
-) {
-}
+) {}
+

@@ -1,16 +1,13 @@
 package com.realjonhworld.smartidea.dto.property;
 
-import java.util.UUID;
-
 public record PropertyListItemDTO(
-        UUID id,
+        java.util.UUID id,
         String name,
-        String description,
         String propertyType,
-        String status,
-        String currentTenant,
-        String currentContractStartDate,
-        String currentContractEndDate,
-        Double lat,
-        Double lng
+        String tenantName,     // inquilino atual (se tiver)
+        String matricula,
+        String rentDueDate,    // venc. aluguel (se tiver contrato ativo)
+        String contractEndDate,
+        String rentValue,
+        String paymentStatus   // "Em dia", "Atrasado", etc. (por enquanto pode vir null)
 ) {}

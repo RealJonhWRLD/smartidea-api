@@ -1,9 +1,8 @@
 package com.realjonhworld.smartidea.controller;
 
 import com.realjonhworld.smartidea.dto.contract.ContractHistoryItemDTO;
-import com.realjonhworld.smartidea.dto.property.PropertyDetailsDTO;
-import com.realjonhworld.smartidea.dto.property.PropertyListItemDTO;
-import com.realjonhworld.smartidea.dto.property.PropertyUpdateRequest;
+import com.realjonhworld.smartidea.dto.property.PropertyDTO;
+import com.realjonhworld.smartidea.dto.property.PropertyRequestDTO;
 import com.realjonhworld.smartidea.model.ContractStatus;
 import com.realjonhworld.smartidea.model.Property;
 import com.realjonhworld.smartidea.model.PropertyContract;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -21,175 +21,157 @@ import java.util.UUID;
 public class PropertyController {
 
     private final PropertyRepository propertyRepository;
-    private final PropertyContractRepository propertyContractRepository;
+    private final PropertyContractRepository contractRepository;
 
     private static final DateTimeFormatter DATE_FORMAT =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public PropertyController(
             PropertyRepository propertyRepository,
-            PropertyContractRepository propertyContractRepository
+            PropertyContractRepository contractRepository
     ) {
         this.propertyRepository = propertyRepository;
-        this.propertyContractRepository = propertyContractRepository;
+        this.contractRepository = contractRepository;
     }
 
-    // 1) LISTA (mapa / sidebar)
+    // LISTA DE IMÓVEIS (mapa + tabela)
     @GetMapping
-    public List<PropertyListItemDTO> listProperties() {
+    public List<PropertyDTO> list() {
+        return propertyRepository.findAll().stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
-        List<Property> properties = propertyRepository.findAll();
+    // DETALHES DE UM IMÓVEL (modal)
+    @GetMapping("/{id}")
+    public PropertyDTO get(@PathVariable UUID id) {
+        Property p = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Imóvel não encontrado"));
+        return toDTO(p);
+    }
 
-        return properties.stream()
-                .map(property -> {
+    // CRIAR IMÓVEL
+    @PostMapping
+    public PropertyDTO create(@RequestBody PropertyRequestDTO request) {
+        Property property = new Property();
+        applyRequest(request, property);
+        Property saved = propertyRepository.save(property);
+        return toDTO(saved);
+    }
 
-                    PropertyContract active = propertyContractRepository
-                            .findFirstByPropertyIdAndStatusOrderByStartDateDesc(
-                                    property.getId(),
-                                    ContractStatus.ACTIVE
-                            )
-                            .orElse(null);
+    // EDITAR IMÓVEL
+    @PutMapping("/{id}")
+    public PropertyDTO update(@PathVariable UUID id,
+                              @RequestBody PropertyRequestDTO request) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Imóvel não encontrado"));
 
-                    String status = (active != null) ? "ALUGADO" : "DISPONIVEL";
-                    String tenantName = (active != null) ? active.getTenant().getName() : null;
+        applyRequest(request, property);
+        Property saved = propertyRepository.save(property);
+        return toDTO(saved);
+    }
 
-                    String startDate = (active != null && active.getStartDate() != null)
-                            ? active.getStartDate().format(DATE_FORMAT)
+    // HISTÓRICO DE CONTRATOS DE UM IMÓVEL
+    @GetMapping("/{id}/contracts")
+    public List<ContractHistoryItemDTO> getContracts(@PathVariable UUID id) {
+        List<PropertyContract> contracts =
+                contractRepository.findByPropertyIdOrderByStartDateDesc(id);
+
+        return contracts.stream()
+                .map(c -> {
+                    String tenantName = c.getTenant() != null ? c.getTenant().getName() : null;
+                    String startDate = c.getStartDate() != null
+                            ? c.getStartDate().format(DATE_FORMAT)
                             : null;
-
-                    String endDate = (active != null && active.getEndDate() != null)
-                            ? active.getEndDate().format(DATE_FORMAT)
+                    String endDate = c.getEndDate() != null
+                            ? c.getEndDate().format(DATE_FORMAT)
                             : null;
+                    Double rentValue = Double.valueOf(c.getRentValue()); // Double
+                    String status = c.getStatus() != null ? c.getStatus().name() : null;
 
-                    return new PropertyListItemDTO(
-                            property.getId(),
-                            property.getName(),
-                            property.getDescription(),
-                            property.getPropertyType(),
-                            status,
+                    return new ContractHistoryItemDTO(
+                            c.getId(),
                             tenantName,
                             startDate,
                             endDate,
-                            property.getLat(),
-                            property.getLng()
+                            rentValue,
+                            status
                     );
                 })
                 .toList();
     }
 
-    // 2) DETALHES COMPLETOS DO IMÓVEL (usado pelo modal)
-    @GetMapping("/{id}")
-    public PropertyDetailsDTO getPropertyDetails(@PathVariable UUID id) {
+    // ----------------- HELPERS -----------------
 
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Imóvel não encontrado"));
-
-        return new PropertyDetailsDTO(
-                property.getId(),
-                property.getName(),
-                property.getPropertyType(),
-                property.getDescription(),
-
-                property.getMatricula(),
-                property.getCagece(),
-                property.getEnel(),
-                property.getLastRenovation(),
-                property.getPropertyStatus(),
-                property.getIptuStatus(),
-                property.getNotes(),
-
-                property.getLat(),
-                property.getLng()
-        );
+    private void applyRequest(PropertyRequestDTO r, Property p) {
+        p.setName(r.name());
+        p.setPropertyType(r.propertyType());
+        p.setDescription(r.description());
+        p.setMatricula(r.matricula());
+        p.setCagece(r.cagece());
+        p.setEnel(r.enel());
+        p.setLastRenovation(r.lastRenovation());
+        p.setPropertyStatus(r.propertyStatus());
+        p.setIptuStatus(r.iptuStatus());
+        p.setNotes(r.notes());
+        p.setLat(r.lat());
+        p.setLng(r.lng());
     }
 
-    // 3) HISTÓRICO DE CONTRATOS
-    @GetMapping("/{id}/contracts")
-    public List<ContractHistoryItemDTO> getContractsByProperty(@PathVariable UUID id) {
+    private PropertyDTO toDTO(Property p) {
 
-        List<PropertyContract> contracts =
-                propertyContractRepository.findByPropertyIdOrderByStartDateDesc(id);
+        // contrato ATIVO mais recente desse imóvel
+        Optional<PropertyContract> optionalActive = contractRepository
+                .findFirstByPropertyIdAndStatusOrderByStartDateDesc(
+                        p.getId(),
+                        ContractStatus.ACTIVE
+                );
 
-        return contracts.stream()
-                .map(contract -> new ContractHistoryItemDTO(
-                        contract.getId(),
-                        contract.getTenant().getName(),
-                        contract.getStartDate() != null
-                                ? contract.getStartDate().format(DATE_FORMAT)
-                                : null,
-                        contract.getEndDate() != null
-                                ? contract.getEndDate().format(DATE_FORMAT)
-                                : null,
-                        contract.getRentValue(),
-                        contract.getStatus().name()
-                ))
-                .toList();
-    }
+        String currentTenant = null;
+        String currentStartDate = null;
+        String currentEndDate = null;
+        Double currentRentValue = null;      // <--- DOUBLE AQUI
+        String currentContractStatus = null;
 
-    // 4) ATUALIZAR IMÓVEL
-    @PutMapping("/{id}")
-    public PropertyDetailsDTO updateProperty(
-            @PathVariable UUID id,
-            @RequestBody PropertyUpdateRequest request
-    ) {
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Imóvel não encontrado"));
+        if (optionalActive.isPresent()) {
+            PropertyContract active = optionalActive.get();
 
-        if (request.name() != null) {
-            property.setName(request.name());
-        }
-        if (request.propertyType() != null) {
-            property.setPropertyType(request.propertyType());
-        }
-        if (request.description() != null) {
-            property.setDescription(request.description());
-        }
-        if (request.matricula() != null) {
-            property.setMatricula(request.matricula());
-        }
-        if (request.cagece() != null) {
-            property.setCagece(request.cagece());
-        }
-        if (request.enel() != null) {
-            property.setEnel(request.enel());
-        }
-        if (request.lastRenovation() != null) {
-            property.setLastRenovation(request.lastRenovation());
-        }
-        if (request.propertyStatus() != null) {
-            property.setPropertyStatus(request.propertyStatus());
-        }
-        if (request.iptuStatus() != null) {
-            property.setIptuStatus(request.iptuStatus());
-        }
-        if (request.notes() != null) {
-            property.setNotes(request.notes());
-        }
-        if (request.lat() != null) {
-            property.setLat(request.lat());
-        }
-        if (request.lng() != null) {
-            property.setLng(request.lng());
+            if (active.getTenant() != null) {
+                currentTenant = active.getTenant().getName();
+            }
+            if (active.getStartDate() != null) {
+                currentStartDate = active.getStartDate().format(DATE_FORMAT);
+            }
+            if (active.getEndDate() != null) {
+                currentEndDate = active.getEndDate().format(DATE_FORMAT);
+            }
+            if (active.getRentValue() != null) {
+                currentRentValue = Double.valueOf(active.getRentValue());  // Double -> Double (ok)
+            }
+            if (active.getStatus() != null) {
+                currentContractStatus = active.getStatus().name();
+            }
         }
 
-        Property saved = propertyRepository.save(property);
-
-        return new PropertyDetailsDTO(
-                saved.getId(),
-                saved.getName(),
-                saved.getPropertyType(),
-                saved.getDescription(),
-
-                saved.getMatricula(),
-                saved.getCagece(),
-                saved.getEnel(),
-                saved.getLastRenovation(),
-                saved.getPropertyStatus(),
-                saved.getIptuStatus(),
-                saved.getNotes(),
-
-                saved.getLat(),
-                saved.getLng()
+        return new PropertyDTO(
+                p.getId(),
+                p.getName(),
+                p.getPropertyType(),
+                p.getDescription(),
+                p.getMatricula(),
+                p.getCagece(),
+                p.getEnel(),
+                p.getLastRenovation(),
+                p.getPropertyStatus(),
+                p.getIptuStatus(),
+                p.getNotes(),
+                p.getLat(),
+                p.getLng(),
+                currentTenant,
+                currentStartDate,
+                currentEndDate,
+                currentRentValue,
+                currentContractStatus
         );
     }
 }

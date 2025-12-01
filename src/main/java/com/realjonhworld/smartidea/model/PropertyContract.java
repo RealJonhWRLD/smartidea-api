@@ -1,64 +1,54 @@
 package com.realjonhworld.smartidea.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @Entity
 @Table(name = "property_contracts")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PropertyContract {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // --- RELACIONAMENTOS ---
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "property_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "property_id")
     private Property property;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "tenant_id")
     private Tenant tenant;
 
-    // --- DATAS ---
-
-    private LocalDate startDate;
-    private LocalDate endDate;
-    private LocalDate createdAt;
-
-    // --- VALORES ---
-
-    private String rentValue;      // ex: "R$ 750,00"
+    // Valores como texto (pra bater com o front atual)
+    private String rentValue;
     private String condoValue;
     private String depositValue;
 
-    // Dia de vencimento do aluguel (ex: "05")
-    private String paymentDay;
+    // Dia do vencimento do aluguel (1..31)
+    private Integer paymentDay;
 
+    // Meses de contrato
     private Integer monthsInContract;
 
-    // Status do IPTU (ex: "Pago", "Em aberto")
     private String iptuStatus;
 
-    // Observações do contrato
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    // Status do contrato (ATIVO, TERMINATED, RESCINDED...)
+    private LocalDate startDate;
+    private LocalDate endDate;
+
     @Enumerated(EnumType.STRING)
     private ContractStatus status;
 
-    // Motivo de rescisão (opcional)
+    // Motivo de rescisão
     private String terminationReason;
 }
