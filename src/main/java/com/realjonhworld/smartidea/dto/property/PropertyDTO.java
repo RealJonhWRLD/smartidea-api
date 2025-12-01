@@ -17,10 +17,11 @@ public record PropertyDTO(
         Double lat,
         Double lng,
 
-        // CAMPOS DO CONTRATO ATIVO
+        // resumo do contrato ATIVO (se existir)
         String currentTenant,
         String currentContractStartDate,
         String currentContractEndDate,
-        Double currentRentValue,
+        String currentRentValue,
         String currentContractStatus
-) {}
+) {
+}

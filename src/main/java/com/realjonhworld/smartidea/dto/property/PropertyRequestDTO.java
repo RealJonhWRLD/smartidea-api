@@ -11,6 +11,7 @@ public record PropertyRequestDTO(
         String propertyStatus,
         String iptuStatus,
         String notes,
-        double lat,
-        double lng
-) {}
+        Double lat,
+        Double lng
+) {
+}

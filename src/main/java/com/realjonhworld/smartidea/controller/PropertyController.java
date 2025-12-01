@@ -34,7 +34,9 @@ public class PropertyController {
         this.contractRepository = contractRepository;
     }
 
-    // LISTA DE IMÓVEIS (mapa + tabela)
+    // ========================================================================
+    // LISTA DE IMÓVEIS (tabela + mapa)
+    // ========================================================================
     @GetMapping
     public List<PropertyDTO> list() {
         return propertyRepository.findAll().stream()
@@ -42,7 +44,9 @@ public class PropertyController {
                 .toList();
     }
 
-    // DETALHES DE UM IMÓVEL (modal)
+    // ========================================================================
+    // DETALHES DE UM IMÓVEL (modal de edição)
+    // ========================================================================
     @GetMapping("/{id}")
     public PropertyDTO get(@PathVariable UUID id) {
         Property p = propertyRepository.findById(id)
@@ -50,7 +54,9 @@ public class PropertyController {
         return toDTO(p);
     }
 
+    // ========================================================================
     // CRIAR IMÓVEL
+    // ========================================================================
     @PostMapping
     public PropertyDTO create(@RequestBody PropertyRequestDTO request) {
         Property property = new Property();
@@ -59,7 +65,9 @@ public class PropertyController {
         return toDTO(saved);
     }
 
+    // ========================================================================
     // EDITAR IMÓVEL
+    // ========================================================================
     @PutMapping("/{id}")
     public PropertyDTO update(@PathVariable UUID id,
                               @RequestBody PropertyRequestDTO request) {
@@ -71,7 +79,9 @@ public class PropertyController {
         return toDTO(saved);
     }
 
+    // ========================================================================
     // HISTÓRICO DE CONTRATOS DE UM IMÓVEL
+    // ========================================================================
     @GetMapping("/{id}/contracts")
     public List<ContractHistoryItemDTO> getContracts(@PathVariable UUID id) {
         List<PropertyContract> contracts =
@@ -79,15 +89,23 @@ public class PropertyController {
 
         return contracts.stream()
                 .map(c -> {
-                    String tenantName = c.getTenant() != null ? c.getTenant().getName() : null;
+                    String tenantName =
+                            c.getTenant() != null ? c.getTenant().getName() : null;
+
                     String startDate = c.getStartDate() != null
                             ? c.getStartDate().format(DATE_FORMAT)
                             : null;
+
                     String endDate = c.getEndDate() != null
                             ? c.getEndDate().format(DATE_FORMAT)
                             : null;
-                    Double rentValue = Double.valueOf(c.getRentValue()); // Double
-                    String status = c.getStatus() != null ? c.getStatus().name() : null;
+
+                    // rentValue é String na entidade, mantemos String no DTO
+                    String rentValue = c.getRentValue();
+
+                    String status = c.getStatus() != null
+                            ? c.getStatus().name()
+                            : null;
 
                     return new ContractHistoryItemDTO(
                             c.getId(),
@@ -101,7 +119,9 @@ public class PropertyController {
                 .toList();
     }
 
-    // ----------------- HELPERS -----------------
+    // ========================================================================
+    // HELPERS
+    // ========================================================================
 
     private void applyRequest(PropertyRequestDTO r, Property p) {
         p.setName(r.name());
@@ -120,7 +140,7 @@ public class PropertyController {
 
     private PropertyDTO toDTO(Property p) {
 
-        // contrato ATIVO mais recente desse imóvel
+        // contrato ATIVO mais recente desse imóvel (se existir)
         Optional<PropertyContract> optionalActive = contractRepository
                 .findFirstByPropertyIdAndStatusOrderByStartDateDesc(
                         p.getId(),
@@ -130,7 +150,7 @@ public class PropertyController {
         String currentTenant = null;
         String currentStartDate = null;
         String currentEndDate = null;
-        Double currentRentValue = null;      // <--- DOUBLE AQUI
+        String currentRentValue = null;
         String currentContractStatus = null;
 
         if (optionalActive.isPresent()) {
@@ -145,9 +165,9 @@ public class PropertyController {
             if (active.getEndDate() != null) {
                 currentEndDate = active.getEndDate().format(DATE_FORMAT);
             }
-            if (active.getRentValue() != null) {
-                currentRentValue = Double.valueOf(active.getRentValue());  // Double -> Double (ok)
-            }
+            // rentValue vem como String da entidade
+            currentRentValue = active.getRentValue();
+
             if (active.getStatus() != null) {
                 currentContractStatus = active.getStatus().name();
             }

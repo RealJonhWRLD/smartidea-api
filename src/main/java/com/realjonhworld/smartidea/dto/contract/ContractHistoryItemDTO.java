@@ -7,7 +7,7 @@ public record ContractHistoryItemDTO(
         String tenantName,
         String startDate,
         String endDate,
-        Double rentValue,
+        String rentValue,   // continua String (ex: "R$ 2.000,00")
         String status
-) {}
-
+) {
+}
