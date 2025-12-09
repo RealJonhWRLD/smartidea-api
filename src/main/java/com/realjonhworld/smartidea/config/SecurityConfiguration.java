@@ -31,7 +31,6 @@ public class SecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        // ✅ DEV: libera TUDO
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session
